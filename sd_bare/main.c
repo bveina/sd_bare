@@ -13,6 +13,7 @@
 #include <avr/pgmspace.h>
 
 #include "mmc_avr.h"
+#include <stdlib.h>
 
 void initSPI();
 void initTimer();
@@ -22,9 +23,17 @@ static int uart_putchar(char c, FILE * stream);
 
 static FILE mystdout = FDEV_SETUP_STREAM(uart_putchar, NULL,
 _FDEV_SETUP_WRITE);
+char line[64];
 
 int main(void)
 {
+	static const char* const fst[] = {"", "FAT12", "FAT16", "FAT32", "exFAT"};
+	FATFS *fs;
+	fs = malloc(sizeof(FATFS));
+	FRESULT fr;
+	DSTATUS t;
+	DWORD p2;
+	
 	initSPI();
 	initTimer();
 	initUART0_57600();
@@ -33,6 +42,25 @@ int main(void)
 	sei();
 	
 	printf("hello World\n");
+		
+	t=f_mount(fs, "", 0);
+	printf_P(PSTR("mount:%d\n"),t);
+	
+	fr = f_getfree("", &p2, &fs);
+	
+	printf_P(PSTR("FAT type = %s\nBytes/Cluster = %lu\nNumber of FATs = %u\n"
+	"Root DIR entries = %u\nSectors/FAT = %lu\nNumber of clusters = %lu\n"
+	"Volume start (lba) = %lu\nFAT start (lba) = %lu\nDIR start (lba,clustor) = %lu\nData start (lba) = %lu\n\n"),
+	fst[fs->fs_type], (DWORD)fs->csize * 512, fs->n_fats,
+	fs->n_rootdir, fs->fsize, fs->n_fatent - 2,
+	(DWORD)fs->volbase, (DWORD)fs->fatbase, (DWORD)fs->dirbase, (DWORD)fs->database
+	);
+	
+	
+	fr = f_getlabel("", line, &p2);
+	printf_P(line[0] ? PSTR("Volume name is %s\n") : PSTR("No volume label\n"), line);
+	printf_P(PSTR("Volume S/N is %04X-%04X\n"), (WORD)((DWORD)p2 >> 16), (WORD)(p2 & 0xFFFF));
+		
 		
     while (1) 
     {

@@ -173,6 +173,7 @@ int wait_ready (	/* 1:Ready, 0:Timeout */
 {
 	BYTE d;
 
+	return 1; // assume ready
 
 	wt /= 10;
 	cli(); Timer2 = wt; sei();
