@@ -12,18 +12,19 @@
 /-------------------------------------------------------------------------*/
 
 #include <avr/io.h>
+#include <avr/interrupt.h>
 #include "diskio.h"
 #include "mmc_avr.h"
 
 /* Peripheral controls (Platform dependent) */
-#warning must define peripheral control
+//#warning must define peripheral control
 
-//#define CS_LOW()		To be filled	/* Set MMC_CS = low */
-//#define	CS_HIGH()		To be filled	/* Set MMC_CS = high */
-//#define MMC_CD			To be filled	/* Test if card detected.   yes:true, no:false, default:true */
-//#define MMC_WP			To be filled	/* Test if write protected. yes:true, no:false, default:false */
-//#define	FCLK_SLOW()		To be filled	/* Set SPI clock for initialization (100-400kHz) */
-//#define	FCLK_FAST()		To be filled	/* Set SPI clock for read/write (20MHz max) */
+#define CS_LOW()		PORTB &=~(1<<CS)	/* Set MMC_CS = low */
+#define	CS_HIGH()		PORTB |=(1<<CS)	/* Set MMC_CS = high */
+#define MMC_CD			(1)	/* Test if card detected.   yes:true, no:false, default:true */
+#define MMC_WP			(0)	/* Test if write protected. yes:true, no:false, default:false */
+#define	FCLK_SLOW()		SPCR0 = (SPCR0 & ~(0b11 <<SPR0)) | (0b10)	/* Set SPI clock for initialization (100-400kHz) */
+#define	FCLK_FAST()		SPCR0 = (SPCR0 & ~(0b11 <<SPR0)) | (0b00)	/* Set SPI clock for read/write (20MHz max) */
 
 
 /*--------------------------------------------------------------------------
@@ -73,10 +74,12 @@ static BYTE CardType;			/* Card type flags (b0:MMC, b1:SDv1, b2:SDv2, b3:Block a
 /* When the target system does not support socket power control, there   */
 /* is nothing to do in these functions and chk_power always returns 1.   */
 
+// nothing to do
+
 static
 void power_on (void)
 {
-	#warning must setup poweron
+	//#warning must setup poweron
 	/* Trun socket power on and wait for 10ms+ (nothing to do if no power controls) */
 	//To be filled
 
@@ -93,7 +96,7 @@ void power_on (void)
 static
 void power_off (void)
 {
-	#warning must setup power off
+	//#warning must setup power off
 	/* Disable SPI function */
 	//To be filled
 
@@ -118,9 +121,9 @@ BYTE xchg_spi (		/* Returns received data */
 	BYTE dat		/* Data to be sent */
 )
 {
-	SPDR = dat;
-	loop_until_bit_is_set(SPSR, SPIF);
-	return SPDR;
+	SPDR0 = dat;
+	loop_until_bit_is_set(SPSR0, SPIF);
+	return SPDR0;
 }
 
 
@@ -132,12 +135,12 @@ void rcvr_spi_multi (
 )
 {
 	do {
-		SPDR = 0xFF;
-		loop_until_bit_is_set(SPSR, SPIF);
-		*p++ = SPDR;
-		SPDR = 0xFF;
-		loop_until_bit_is_set(SPSR, SPIF);
-		*p++ = SPDR;
+		SPDR0 = 0xFF;
+		loop_until_bit_is_set(SPSR0, SPIF);
+		*p++ = SPDR0;
+		SPDR0 = 0xFF;
+		loop_until_bit_is_set(SPSR0, SPIF);
+		*p++ = SPDR0;
 	} while (cnt -= 2);
 }
 
@@ -150,10 +153,10 @@ void xmit_spi_multi (
 )
 {
 	do {
-		SPDR = *p++;
-		loop_until_bit_is_set(SPSR, SPIF);
-		SPDR = *p++;
-		loop_until_bit_is_set(SPSR, SPIF);
+		SPDR0 = *p++;
+		loop_until_bit_is_set(SPSR0, SPIF);
+		SPDR0 = *p++;
+		loop_until_bit_is_set(SPSR0, SPIF);
 	} while (cnt -= 2);
 }
 

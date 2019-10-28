@@ -12,6 +12,12 @@
 extern "C" {
 #endif
 
+#define MISO 4
+#define MOSI 3
+#define SCK 5
+#define CS 2
+
+
 /*---------------------------------------*/
 /* Prototypes for disk control functions */
 
