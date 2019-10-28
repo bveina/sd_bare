@@ -5,16 +5,19 @@
  * Author : u_bviall
  */ 
 
+#define F_CPU 16000000UL
 #include <avr/io.h>
 
 #include "mmc_avr.h"
 
 void initSPI();
+void initTimer();
 
 int main(void)
 {
 	initSPI();
-    /* Replace with your application code */
+	initTimer();
+
 	
     while (1) 
     {
@@ -28,4 +31,17 @@ void initSPI()
 	PORTB |=(1<<CS);
 	SPCR0 |= (1<<SPE) | (1<< MSTR) | (0b10 <<SPR0);
 	SPSR0 |= 1<<SPI2X;
+}
+
+void initTimer()
+{
+	OCR0A = F_CPU / 1024 / 100 - 1;
+	TCCR0A = _BV(WGM01);
+	TCCR0B = 0b101;
+	TIMSK0 = _BV(OCIE0A);
+}
+
+ISR(TIMER0_COMPA_vect)
+{
+	disk_timerproc();	/* Drive timer procedure of low level disk I/O module */
 }
